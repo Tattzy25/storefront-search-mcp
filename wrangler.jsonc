@@ -9,7 +9,7 @@
     "run_worker_first": ["/mcp"]
   },
   "analytics_engine_datasets": [
-    { "binding": "ANALYTICS_ENGINE", "dataset": "MCP'S" }
+    { "binding": "ANALYTICS_ENGINE", "dataset": "MCPS" }
   ],
   "observability": {
     "logs": {

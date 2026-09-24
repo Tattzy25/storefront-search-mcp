@@ -131,9 +131,10 @@ const getProductInputSchema = z.object({
     .describe("The catalog object containing the product lookup parameters. All parameters are wrapped in a catalog object. Refer to the UCP catalog lookup spec for the complete schema.")
 });
 function formatCatalogMarkdown(result: Record<string, unknown>): string {
-  const data = (result.result as Record<string, unknown>) ?? result;
-  const catalog = (data.catalog as Record<string, unknown>) ?? data;
-  const products = (catalog.products as Array<Record<string, unknown>>) ?? [];
+  const rpcResult = (result.result as Record<string, unknown>) ?? result;
+  const structured = (rpcResult.structuredContent as Record<string, unknown>) ?? rpcResult;
+  const products = (structured.products as Array<Record<string, unknown>>) ?? [];
+  const product = structured.product as Record<string, unknown> | undefined;
   const fmtPrice = (p: Record<string, unknown> | undefined) => {
     if (!p) return "—";
     const amount = p.amount as number | undefined;
@@ -145,7 +146,8 @@ function formatCatalogMarkdown(result: Record<string, unknown>): string {
   const fmtProduct = (p: Record<string, unknown>) => {
     const title = (p.title as string) ?? "Untitled";
     const url = (p.url as string) ?? "";
-    const description = (p.description as string) ?? "";
+    const descObj = p.description as Record<string, unknown> | undefined;
+    const description = (descObj?.html as string) ?? (p.description as string) ?? "";
     const oneLine = description.split("\n")[0].trim();
     const priceRange = p.price_range as Record<string, unknown> | undefined;
     const price = p.price as Record<string, unknown> | undefined;
@@ -163,13 +165,18 @@ function formatCatalogMarkdown(result: Record<string, unknown>): string {
     const media = (p.media as Array<Record<string, unknown>>) ?? [];
     const img = media[0];
     const imgSrc = (img?.url as string) ?? (img?.src as string) ?? "";
-    const imgAlt = (img?.alt as string) ?? title;
+    const imgAlt = (img?.alt_text as string) ?? (img?.alt as string) ?? title;
     const link = url ? `[${title}](${url})` : title;
     const imageMd = imgSrc ? `![${imgAlt}](${imgSrc})` : "";
     return `### ${link}\n${imageMd}\n**${priceStr}**\n${oneLine}`;
   };
-  return products.map(fmtProduct).join("\n\n---\n\n");
+  if (products.length > 0)
+    return products.map(fmtProduct).join("\n\n---\n\n");
+  if (product)
+    return fmtProduct(product);
+  return "";
 }
+
 function createServer() {
   const server = new McpServer({
     name: "Storefront Search MCP",
@@ -193,7 +200,7 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: formatCatalogMarkdown(result), type: "text" }], structuredContent: result };
+      return { content: [{ text: JSON.stringify(result), type: "text" }], structuredContent: result };
     }
   );
   server.registerTool(
@@ -214,7 +221,7 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: formatCatalogMarkdown(result), type: "text" }], structuredContent: result };
+      return { content: [{ text: JSON.stringify(result), type: "text" }], structuredContent: result };
     }
   );
   server.registerTool(
@@ -235,7 +242,7 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: formatCatalogMarkdown(result), type: "text" }], structuredContent: result };
+      return { content: [{ text: JSON.stringify(result), type: "text" }], structuredContent: result };
     }
   );
   return server;

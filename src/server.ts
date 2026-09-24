@@ -115,6 +115,7 @@ function formatToMarkdown(data: any): string {
   try {
     let payload = data;
     if (payload?.result) payload = payload.result;
+    if (payload?.structuredContent) payload = payload.structuredContent;
 
     let md = "";
 

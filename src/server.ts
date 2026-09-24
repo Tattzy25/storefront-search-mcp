@@ -149,10 +149,10 @@ function createServer() {
       description: "Searches the store's product catalog. The response conforms to the UCP catalog search response, including a UCP metadata envelope; products with title, description, price range (minor units), media, and variants; and cursor-based pagination. When to use: A customer asks \"Do you have any organic coffee?\", You need to find products matching specific criteria, or A customer wants to browse items in a category.",
       inputSchema: searchCatalogInputSchema
     },
-    async ({ shop_domain, meta, catalog }: z.infer<typeof searchCatalogInputSchema>) => {
+        async ({ shop_domain, meta, catalog }: z.infer<typeof searchCatalogInputSchema>) => {
       const response = await fetch(`https://${shop_domain}/api/ucp/mcp`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "MCP-Protocol-Version": "2026-03-26" },
         body: JSON.stringify({
           jsonrpc: "2.0",
           method: "tools/call",

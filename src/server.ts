@@ -130,12 +130,12 @@ const getProductInputSchema = z.object({
     })
     .describe("The catalog object containing the product lookup parameters. All parameters are wrapped in a catalog object. Refer to the UCP catalog lookup spec for the complete schema.")
 });
-function cleanResult(result: Record<string, unknown>): string {
+function cleanResult(result: Record<string, unknown>): { products: unknown[]; pagination: unknown } {
   const rpcResult = (result.result as Record<string, unknown>) ?? result;
   const structured = (rpcResult.structuredContent as Record<string, unknown>) ?? rpcResult;
   const products = (structured.products as Array<Record<string, unknown>>) ?? [];
   const pagination = (structured.pagination as Record<string, unknown> | undefined) ?? undefined;
-  return JSON.stringify({ products, pagination });
+  return { products, pagination };
 }
 
 function createServer() {
@@ -161,7 +161,8 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: cleanResult(result), type: "text" }], structuredContent: result };
+      const cleaned = cleanResult(result);
+      return { content: [{ text: JSON.stringify(cleaned), type: "text" }], structuredContent: cleaned };
     }
   );
   server.registerTool(
@@ -182,7 +183,8 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: cleanResult(result), type: "text" }], structuredContent: result };
+      const cleaned = cleanResult(result);
+      return { content: [{ text: JSON.stringify(cleaned), type: "text" }], structuredContent: cleaned };
     }
   );
   server.registerTool(
@@ -203,7 +205,8 @@ function createServer() {
         })
       });
       const result = await response.json() as Record<string, unknown>;
-      return { content: [{ text: cleanResult(result), type: "text" }], structuredContent: result };
+      const cleaned = cleanResult(result);
+      return { content: [{ text: JSON.stringify(cleaned), type: "text" }], structuredContent: cleaned };
     }
   );
   return server;
